@@ -49,9 +49,15 @@ loginForm.onsubmit = async (e) => {
     const email = loginEmail.value;
     const password = loginPassword.value;
     try {
-        await signInWithEmailAndPassword(auth, email, password);
-        // Redirect to institution.html after login
-        window.location.href = '../Institution/institution.html';
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        // Check Firestore for user info
+        const userRef = doc(db, 'users', cred.user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            window.location.href = '../Dashboard/dashboard.html';
+        } else {
+            window.location.href = '../Institution/institution.html';
+        }
     } catch (error) {
         alert('Login failed: ' + error.message);
     }
@@ -63,7 +69,13 @@ signupForm.onsubmit = async (e) => {
     const email = signupEmail.value;
     const password = signupPassword.value;
     try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        // Save extra info in Firestore (doc id = user UID)
+        await setDoc(doc(db, "users", cred.user.uid), {
+            email,
+            role: "student",
+            createdAt: new Date()
+        });
         // Redirect to institution.html after signup
         window.location.href = '../Institution/institution.html';
     } catch (error) {
@@ -74,9 +86,21 @@ signupForm.onsubmit = async (e) => {
 // Google sign in/up
 googleSignInBtn.onclick = async () => {
     try {
-        await signInWithPopup(auth, provider);
-        // Always redirect to institution.html after Google sign in/up
-        window.location.href = '../Institution/institution.html';
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            window.location.href = '../Dashboard/dashboard.html';
+        } else {
+            // If new user, create entry with default role
+            await setDoc(userRef, {
+                email: user.email,
+                role: "student",
+                createdAt: new Date()
+            });
+            window.location.href = '../Institution/institution.html';
+        }
     } catch (error) {
         alert('Google sign in/up failed: ' + error.message);
     }
@@ -86,8 +110,16 @@ signOutBtn.onclick = async () => {
     await signOut(auth);
 };
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user) {
+        // Check if user info exists in Firestore
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            // Redirect to dashboard if info exists
+            window.location.href = '../Dashboard/dashboard.html';
+            return;
+        }
         userInfoDiv.style.display = 'block';
         signOutBtn.style.display = 'inline-block';
         googleSignInBtn.style.display = 'none';

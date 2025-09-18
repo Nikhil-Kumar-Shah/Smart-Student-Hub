@@ -1,5 +1,7 @@
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAxWDvbldPnVVahCaHQbYFd9zf-Tpj_bIE",
@@ -11,8 +13,10 @@ const firebaseConfig = {
     measurementId: "G-JNPW5DZFD5"
 };
 
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 const loginForm = document.getElementById('institutionLoginForm');
 const emailInput = document.getElementById('institutionEmail');
@@ -31,16 +35,28 @@ googleSignInBtn.onclick = async () => {
     }
 };
 
+
 loginForm.onsubmit = async (e) => {
     e.preventDefault();
     const email = emailInput.value;
     const password = passwordInput.value;
     try {
-        await signInWithEmailAndPassword(auth, email, password);
-        // Redirect to dashboard after institution login
-        window.location.href = '../Dashboard/dashboard.html';
+        // Read all institute docs and match email/password
+        const querySnapshot = await getDocs(collection(db, "institute"));
+        let found = false;
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.email === email && data.password === password) {
+                found = true;
+            }
+        });
+        if (found) {
+            window.location.href = '../Dashboard/dashboard.html';
+        } else {
+            alert('Institution login failed: Invalid email or password.');
+        }
     } catch (error) {
-        alert('Login failed: ' + error.message);
+        alert('Institution login failed: ' + error.message);
     }
 };
 
