@@ -42,7 +42,7 @@ loginForm.onsubmit = async (e) => {
     const password = passwordInput.value;
     try {
         // Read all institute docs and match email/password
-        const querySnapshot = await getDocs(collection(db, "institute"));
+        const querySnapshot = await getDocs(collection(db, "institute "));
         let found = false;
         querySnapshot.forEach((doc) => {
             const data = doc.data();
