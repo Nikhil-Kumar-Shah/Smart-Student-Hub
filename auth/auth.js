@@ -1,3 +1,33 @@
+// Password eye toggle for login
+const loginPwdInput = document.getElementById('loginPassword');
+const toggleLoginBtn = document.getElementById('toggleLoginPassword');
+const eyeIconLogin = document.getElementById('eyeIconLogin');
+if (toggleLoginBtn) {
+    toggleLoginBtn.onclick = function() {
+        if (loginPwdInput.type === 'password') {
+            loginPwdInput.type = 'text';
+            eyeIconLogin.textContent = '🙈';
+        } else {
+            loginPwdInput.type = 'password';
+            eyeIconLogin.textContent = '👁️';
+        }
+    };
+}
+// Password eye toggle for signup
+const signupPwdInput = document.getElementById('signupPassword');
+const toggleSignupBtn = document.getElementById('toggleSignupPassword');
+const eyeIconSignup = document.getElementById('eyeIconSignup');
+if (toggleSignupBtn) {
+    toggleSignupBtn.onclick = function() {
+        if (signupPwdInput.type === 'password') {
+            signupPwdInput.type = 'text';
+            eyeIconSignup.textContent = '🙈';
+        } else {
+            signupPwdInput.type = 'password';
+            eyeIconSignup.textContent = '👁️';
+        }
+    };
+}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
@@ -49,13 +79,27 @@ loginForm.onsubmit = async (e) => {
     const email = loginEmail.value;
     const password = loginPassword.value;
     try {
+        // Try to sign in
         const cred = await signInWithEmailAndPassword(auth, email, password);
-        // Check Firestore for user info
         const userRef = doc(db, 'users', cred.user.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-            window.location.href = '../Dashboard/dashboard.html';
+            const userData = userSnap.data();
+            // Check if email matches (extra safety)
+            if (userData.email === email) {
+                window.location.href = '../Dashboard/dashboard.html';
+            } else {
+                await signOut(auth);
+                alert('Email does not match our records.');
+            }
         } else {
+            // User authenticated but not in Firestore, create user doc and redirect to institution.html
+            await setDoc(userRef, {
+                email,
+                password,
+                role: "student",
+                createdAt: new Date()
+            });
             window.location.href = '../Institution/institution.html';
         }
     } catch (error) {
@@ -70,14 +114,19 @@ signupForm.onsubmit = async (e) => {
     const password = signupPassword.value;
     try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        // Save extra info in Firestore (doc id = user UID)
-        await setDoc(doc(db, "users", cred.user.uid), {
-            email,
-            role: "student",
-            createdAt: new Date()
-        });
-        // Redirect to institution.html after signup
-        window.location.href = '../Institution/institution.html';
+        const userRef = doc(db, "users", cred.user.uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            await setDoc(userRef, {
+                email,
+                password,
+                role: "student",
+                createdAt: new Date()
+            });
+            window.location.href = '../Institution/institution.html';
+        } else {
+            alert('User already exists. Please log in.');
+        }
     } catch (error) {
         alert('Sign up failed: ' + error.message);
     }
@@ -91,11 +140,13 @@ googleSignInBtn.onclick = async () => {
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
+            // Existing user: go to dashboard
             window.location.href = '../Dashboard/dashboard.html';
         } else {
-            // If new user, create entry with default role
+            // New user: create entry, then go to institution.html
             await setDoc(userRef, {
                 email: user.email,
+                password: null,
                 role: "student",
                 createdAt: new Date()
             });
@@ -112,6 +163,11 @@ signOutBtn.onclick = async () => {
 
 onAuthStateChanged(auth, async (user) => {
     if (user) {
+        // Prevent dashboard redirect if just signed up
+        if (sessionStorage.getItem('justSignedUp')) {
+            sessionStorage.removeItem('justSignedUp');
+            return;
+        }
         // Check if user info exists in Firestore
         const userRef = doc(db, 'users', user.uid);
         const userSnap = await getDoc(userRef);

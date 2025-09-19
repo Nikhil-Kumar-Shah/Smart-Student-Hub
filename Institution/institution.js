@@ -1,6 +1,21 @@
+// Password eye toggle for institution login
+const pwdInput = document.getElementById('institutionPassword');
+const toggleBtn = document.getElementById('toggleInstitutionPassword');
+const eyeIcon = document.getElementById('eyeIcon');
+if (toggleBtn) {
+    toggleBtn.onclick = function() {
+        if (pwdInput.type === 'password') {
+            pwdInput.type = 'text';
+            eyeIcon.textContent = '🙈';
+        } else {
+            pwdInput.type = 'password';
+            eyeIcon.textContent = '👁️';
+        }
+    };
+}
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -23,17 +38,6 @@ const emailInput = document.getElementById('institutionEmail');
 const passwordInput = document.getElementById('institutionPassword');
 const userInfoDiv = document.getElementById('userInfo');
 const signOutBtn = document.getElementById('signOutBtn');
-const googleSignInBtn = document.getElementById('googleSignIn');
-const provider = new GoogleAuthProvider();
-// Google login for institution
-googleSignInBtn.onclick = async () => {
-    try {
-        await signInWithPopup(auth, provider);
-        window.location.href = '../Dashboard/dashboard.html';
-    } catch (error) {
-        alert('Google login failed: ' + error.message);
-    }
-};
 
 
 loginForm.onsubmit = async (e) => {
