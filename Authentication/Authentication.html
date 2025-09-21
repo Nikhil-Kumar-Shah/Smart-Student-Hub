@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Student Login / Sign-up</title>
+	<link rel="stylesheet" href="Authentication.css">
+</head>
+<body>
+	<div class="container">
+		<h2>Student Login / Sign-up</h2>
+		<div style="display:flex;justify-content:center;gap:1rem;margin-bottom:1rem;">
+			<button id="showLogin" type="button" class="tab-btn active">Login</button>
+			<button id="showSignup" type="button" class="tab-btn">Sign Up</button>
+		</div>
+		<form id="loginForm">
+			<input type="email" id="loginEmail" placeholder="Email" required><br>
+			<div class="password-wrapper">
+				<input type="password" id="loginPassword" placeholder="Password" required class="password-input">
+				<button type="button" id="toggleLoginPassword" class="eye-btn">
+					<span id="eyeIconLogin">👁️</span>
+				</button>
+			</div><br>
+			<button type="submit">Login</button>
+		</form>
+		<form id="signupForm" style="display:none;">
+			<input type="email" id="signupEmail" placeholder="Email" required><br>
+			<div class="password-wrapper">
+				<input type="password" id="signupPassword" placeholder="Password" required class="password-input">
+				<button type="button" id="toggleSignupPassword" class="eye-btn">
+					<span id="eyeIconSignup">👁️</span>
+				</button>
+			</div><br>
+			<button type="submit">Sign Up</button>
+		</form>
+		<div class="user-info" id="userInfo" style="display:none;"></div>
+	</div>
+	<script type="module" src="Authentication.js"></script>
+</body>
+</html>
